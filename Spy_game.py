@@ -15,7 +15,8 @@ except FileNotFoundError:
 def get_data():
     app_id = data[1]['APP_ID']
     version_res = data[2]['VERSION']
-    token_res = data[3]['TOKEN']
+    user_id = data[3]['USER_ID']
+    token_res = data[4]['TOKEN']
 
     # Словарь с ключами
     auth_data = {
@@ -23,7 +24,8 @@ def get_data():
         'redirect_uri': 'https://oauth.vk.com/blank.html',
         'access_token': 'status',
         'response_type': token_res,
-        'v': version_res
+        'v': version_res,
+        'user_id': user_id
     }
 
     # print('?'.join((AUTHORIZE_URL, urlencode(auth_data))))
@@ -61,7 +63,7 @@ def append_json(text):
 
 def get_groups():
     information = get_data()
-    user_id = '5030613'
+    user_id = information['user_id']
     offset = 0
     token_res = information['response_type']
 
