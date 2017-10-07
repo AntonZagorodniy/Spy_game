@@ -34,14 +34,23 @@ def get_config():
 
 
 def call_api(requests_api_vk, params):
+    a = 0
     while(True):
         try:
             r = requests.get(requests_api_vk, params)
+            a += 1
+            print(a)
             print("+")
-        except KeyError:  # TOO_MANY_REQUESTS:    Traceback (most recent call last):
-            print("-")
-            return  # continue  # r = requests.get(requests_api_vk, params)
-    return r
+            # print(r.json()) #(r.json()['error_code'])  #
+            # if int(r.json()['error']['error_code']) == 7:
+
+        except int(r.json()['error']['error_code']) == 7:
+                continue
+        # except KeyError:  # TOO_MANY_REQUESTS:    Traceback (most recent call last):
+        #     print("-")
+        #     return  # continue  # r = requests.get(requests_api_vk, params)
+        print(r.json())
+        return r
 
 
 def get_friends_list():
