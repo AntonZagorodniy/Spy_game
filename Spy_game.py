@@ -1,9 +1,11 @@
 import sys
 import time; time.time()
 import json
-from time import sleep
 
 import requests
+
+TOO_MANY_REQUESTS = 6
+USER_IS_BANNED = 18
 
 try:
     with open('config.json', encoding='utf-8-sig') as f:
@@ -14,34 +16,23 @@ except FileNotFoundError:
 
 
 def call_api(requests_api_vk, params):
-    a = 0
-    err = False
     try:
-        while(True) and not err:
+        while True:
             r = requests.get(requests_api_vk, params)
-            if int(r.json()['error']['error_code']) != 18:
-                if int(r.json()['error']['error_code']) == 6:
-                    time.sleep(6)
-                else:
-                    a += 1
-                    print(a)
-                    # print("+")
-                    break
+            res = r.json()
+            if 'error' in res:
+                if res['error']['error_code'] == USER_IS_BANNED:
+                    print("Страница пользователя была удалена или заблокирована")
+                    return None
+                elif res['error']['error_code'] == TOO_MANY_REQUESTS:
+                    time.sleep(1)
             else:
-                print("Страница пользователя была удалена или заблокирована")
-                err = True
-
-    finally:
-        print(r.json())
-        if not err:
-            print("OK")
-            return r
-        # else:
-        #     print("NO")
+                return r
+    except Exception:
+        pass
 
 
 def get_friends_list():
-
     params = {
         'access_token': config['TOKEN'],
         'v': config['VERSION']
@@ -52,7 +43,7 @@ def get_friends_list():
 
 
 def create_json(data_res):
-    with open('response.json', 'w', encoding='utf8') as file:
+    with open('groups.json', 'w', encoding='utf8') as file:
         json.dump(data_res, file, indent=2, ensure_ascii=False)
 
 
@@ -72,7 +63,6 @@ def get_groups():
     r = call_api('https://api.vk.com/method/groups.get', params)
     groups = r.json()['response']
     user_groups.extend(groups)
-    del user_groups[0]
     return user_groups
 
 
@@ -80,62 +70,55 @@ def check_for_presence():
     offset = 0
     user_groups = get_groups()
     friends_list = get_friends_list()
-    ind = 0
-    all_groups = []
-    for friend in friends_list:
 
+    for i, friend in enumerate(friends_list):
         params = {
             'access_token': config['TOKEN'],
             'user_id': friend,
             'offset': offset,
             'count': 1000,
+            'v': config['VERSION'],
         }
         r = call_api('https://api.vk.com/method/groups.get', params)
+
         if not r:
             continue
         else:
             groups = r.json()['response']
             user_groups = list(set(user_groups) - set(groups))
-            # params = {
-            #     'access_token': config['TOKEN'],
-            #     'user_id': friend,
-            #     'offset': offset,
-            #     'count': 1000,
-            # }
-            # r = call_api('https://api.vk.com/method/groups.get', params)
-            # if not r:
-            #     continue
-            # else:
-            #     print("euu")
-            #     groups = r.json()['response']
-            #     all_groups.extend(groups)
-            #     if int(offset) < (r.json()['response'][0]):
-            #         print("да")
-            #         break
-            #     else:
-            #         offset += 1000
-            # user_groups = list(set(user_groups) - set(all_groups))
-            ind += 1
-            print("Обработано значений {} из {}".format(ind, len(friends_list)))
+            print("Обработано значений {} из {}".format(i + 1, len(friends_list)))
     return user_groups
+
+
+def get_info_groups(group_info):
+    name = group_info[0]['name']
+    gid = group_info[0]['gid']
+    members_count = group_info[0]['members_count']
+
+    groups_info = {
+        'name': name,
+        'gid': gid,
+        'members_count': members_count
+    }
+    return groups_info
 
 
 def get_groups_info():
     groups = check_for_presence()
-    len_groups = (len(groups))
-    ind = 0
+    len_groups = len(groups)
     list_json = []
-    for group in groups:
+    for i, group in enumerate(groups):
         params = {
             'access_token': config['TOKEN'],
-            'group_id': group
+            'group_id': group,
+            'fields': 'members_count'
         }
         r = call_api('https://api.vk.com/method/groups.getById', params)
         group_info = r.json()
-        ind += 1
-        list_json.extend(group_info['response'])
-        create_json(list_json)
-        print("Записано в файл: {} из {}".format(ind, len_groups))
+        new_group_info = get_info_groups(group_info['response'])
+        list_json.append(new_group_info)
+        print("Записано в файл: {} из {}".format(i + 1, len_groups))
+    create_json(list_json)
 
 
 def main():
