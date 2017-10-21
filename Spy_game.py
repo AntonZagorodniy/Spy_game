@@ -28,8 +28,10 @@ def call_api(requests_api_vk, params):
                     time.sleep(1)
             else:
                 return r
-    except Exception:
-        pass
+    except ValueError:
+        print('Получено некоректное значение')
+    except TypeError:
+        print('Операция применена к объекту несоответствующего типа')
 
 
 def get_friends_list():
@@ -57,6 +59,7 @@ def get_groups():
         'user_id': config['USER_ID'],
         'offset': offset,
         'count': 1000,
+        'v': config['VERSION'],
     }
 
     # - получение списка групп пользователя
@@ -71,7 +74,7 @@ def check_for_presence():
     user_groups = get_groups()
     friends_list = get_friends_list()
 
-    for i, friend in enumerate(friends_list):
+    for i, friend in enumerate(friends_list, 1):
         params = {
             'access_token': config['TOKEN'],
             'user_id': friend,
@@ -86,7 +89,7 @@ def check_for_presence():
         else:
             groups = r.json()['response']
             user_groups = list(set(user_groups) - set(groups))
-            print("Обработано значений {} из {}".format(i + 1, len(friends_list)))
+            print("Обработано значений {} из {}".format(i, len(friends_list)))
     return user_groups
 
 
@@ -94,20 +97,14 @@ def get_info_groups(group_info):
     name = group_info[0]['name']
     gid = group_info[0]['gid']
     members_count = group_info[0]['members_count']
-
-    groups_info = {
-        'name': name,
-        'gid': gid,
-        'members_count': members_count
-    }
-    return groups_info
+    return {'name': name, 'gid': gid, 'members_count': members_count}  #groups_info
 
 
 def get_groups_info():
     groups = check_for_presence()
     len_groups = len(groups)
     list_json = []
-    for i, group in enumerate(groups):
+    for i, group in enumerate(groups, 1):
         params = {
             'access_token': config['TOKEN'],
             'group_id': group,
@@ -117,7 +114,7 @@ def get_groups_info():
         group_info = r.json()
         new_group_info = get_info_groups(group_info['response'])
         list_json.append(new_group_info)
-        print("Записано в файл: {} из {}".format(i + 1, len_groups))
+        print("Записано в файл: {} из {}".format(i, len_groups))
     create_json(list_json)
 
 
