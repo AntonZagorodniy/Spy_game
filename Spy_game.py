@@ -89,7 +89,7 @@ def check_for_presence():
         if not r:
             continue
         else:
-            groups = r.json()['response']
+            groups = r.json()['response']['items']
             user_groups = list(set(user_groups) - set(groups))
             print("Обработано значений {} из {}".format(i, len(friends_list)))
     return user_groups
