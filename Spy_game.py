@@ -30,8 +30,10 @@ def call_api(requests_api_vk, params):
                 return r
     except ValueError:
         print('Получено некоректное значение')
+        sys.exit(1)
     except TypeError:
         print('Операция применена к объекту несоответствующего типа')
+        sys.exit(1)
 
 
 def get_friends_list():
@@ -64,7 +66,7 @@ def get_groups():
 
     # - получение списка групп пользователя
     r = call_api('https://api.vk.com/method/groups.get', params)
-    groups = r.json()['response']
+    groups = r.json()['response']['items']
     user_groups.extend(groups)
     return user_groups
 
