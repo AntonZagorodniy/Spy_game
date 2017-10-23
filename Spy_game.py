@@ -39,7 +39,8 @@ def call_api(requests_api_vk, params):
 def get_friends_list():
     params = {
         'access_token': config['TOKEN'],
-        'v': config['VERSION']
+        'user_id': config['USER_ID'],
+        'v': config['VERSION'],
     }
     r = call_api('https://api.vk.com/method/friends.get', params)
     users_list = list(r.json()['response']['items'])
