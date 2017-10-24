@@ -16,24 +16,17 @@ except FileNotFoundError:
 
 
 def call_api(requests_api_vk, params):
-    try:
-        while True:
-            r = requests.get(requests_api_vk, params)
-            res = r.json()
-            if 'error' in res:
-                if res['error']['error_code'] == USER_IS_BANNED:
-                    print("Страница пользователя была удалена или заблокирована")
-                    return None
-                elif res['error']['error_code'] == TOO_MANY_REQUESTS:
-                    time.sleep(1)
-            else:
-                return r
-    except ValueError:
-        print('Получено некоректное значение')
-        sys.exit(1)
-    except TypeError:
-        print('Операция применена к объекту несоответствующего типа')
-        sys.exit(1)
+    while True:
+        r = requests.get(requests_api_vk, params)
+        res = r.json()
+        if 'error' in res:
+            if res['error']['error_code'] == USER_IS_BANNED:
+                print("Страница пользователя была удалена или заблокирована")
+                return None
+            elif res['error']['error_code'] == TOO_MANY_REQUESTS:
+                time.sleep(1)
+        else:
+            return r
 
 
 def get_friends_list():
